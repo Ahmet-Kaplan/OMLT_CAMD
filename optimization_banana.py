@@ -316,12 +316,16 @@ for v in range(m.nn.N):
 
 m.obj = pyo.Objective(expr=(m.nn.outputs[1] - m.nn.outputs[0]), sense=pyo.maximize)
 
+# Changed from gurobi to cbc (Open Source)
 
-opt = pyo.SolverFactory("gurobi_persistent")
-opt.set_instance(m)
-opt.set_gurobi_param("Seed", seed_grb)
-opt.set_gurobi_param("TimeLimit", 36000)
+# opt = pyo.SolverFactory("gurobi_persistent")
+# opt.set_instance(m)
+# opt.set_gurobi_param("Seed", seed_grb)
+# opt.set_gurobi_param("TimeLimit", 36000)
+
 # opt.set_gurobi_param("MIPFocus", 1)
+
+opt = pyo.SolverFactory("glpk") # Changed from gurobi to glpk (Open Source)
 
 cb_times = []
 cb_sols = []
@@ -333,13 +337,14 @@ def my_callback(cb_m, cb_opt, cb_where):
         cb_sols.append(cb_opt.cbGet(GRB.Callback.MIPSOL_OBJ))
 
 
-opt.set_callback(my_callback)
+# opt.set_callback(my_callback)
 
-result = opt.solve(tee=False)
+result = opt.solve(m, tee=False, keepfiles=True, timelimit=3600)
 
 
 # print(cb_times)
 # print(cb_sols)
+opt_time = 0
 for i in range(len(cb_times)):
     if np.abs(cb_sols[i] - cb_sols[-1]) < 1e-9:
         opt_time = cb_times[i]
